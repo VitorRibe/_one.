@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosso Primeiro Ano</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --accent-color: #ff4b4b;
+            --accent-glow: rgba(255, 75, 75, 0.4);
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --modal-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            /* Gradiente animado suave */
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 50px 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1a202c;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            font-weight: 300;
+        }
+
+        /* Linha do Tempo */
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(to bottom, transparent, var(--accent-color), transparent);
+            border-radius: 3px;
+            opacity: 0.6;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 50px;
+            padding-left: 55px;
+            opacity: 0; /* Começa invisível para o Intersection Observer */
+            transform: translateY(30px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 12px;
+            top: 25px;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 0 15px var(--accent-glow);
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        /* Efeito Glassmorphism nos Cards */
+        .timeline-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .timeline-item:hover .timeline-content {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 255, 255, 1);
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.3);
+        }
+
+        .timeline-thumb {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .timeline-text {
+            flex-grow: 1;
+        }
+
+        .timeline-date {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .timeline-text h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1a202c;
+        }
+
+        .timeline-text p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Modal / Lightbox Refinado */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            max-width: 600px;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: 300;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #1a202c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .modal-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .modal-img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-body h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 12px;
+        }
+
+        .modal-body p {
+            line-height: 1.7;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            font-weight: 400;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsividade para desktop */
+        @media (min-width: 768px) {
+            .timeline::before {
+                left: 50%;
+                margin-left: -1.5px;
+            }
+            .timeline-item {
+                width: 50%;
+                padding-left: 0;
+                padding-right: 50px;
+            }
+            .timeline-item:nth-child(even) {
+                left: 50%;
+                padding-left: 50px;
+                padding-right: 0;
+            }
+            .timeline-dot {
+                left: auto;
+                right: -9px;
+                top: 50%;
+                margin-top: -9px;
+            }
+            .timeline-item:nth-child(even) .timeline-dot {
+                left: -9px;
+                right: auto;
+            }
+            .timeline-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .timeline-thumb {
+                width: 100%;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Nosso Primeiro Ano</h1>
+        <p>A compilação dos nossos melhores momentos em produção.</p>
+    </div>
+
+    <div class="timeline" id="timeline-container">
+        <!-- Renderizado dinamicamente pelo JS -->
+    </div>
+
+    <!-- Modal Estrutura -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-modal">&times;</button>
+            <img src="" alt="" class="modal-img" id="modal-img">
+            <div class="modal-body">
+                <span class="timeline-date" id="modal-date"></span>
+                <h2 id="modal-title"></h2>
+                <p id="modal-desc"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const momentos = [
+            {
+                id: 1,
+                data: "24 de Agosto de 2025",
+                titulo: "O Início do Baseline",
+                descricao: "O dia em que nossa variável together passou a ser true. O primeiro passo da nossa otimização conjunta.",
+                imagem: "https://images.unsplash.com/photo-1518199266791-5375a83164ba?w=800&q=80" 
+            },
+            {
+                id: 2,
+                data: "Novembro de 2025",
+                titulo: "Nossa Primeira Viagem",
+                descricao: "Testando nosso algoritmo em novos ambientes. Foi aqui que percebi que qualquer cenário com você é o ideal.",
+                imagem: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"
+            },
+            {
+                id: 3,
+                data: "Fevereiro de 2026",
+                titulo: "Superando Bugs Juntos",
+                descricao: "Nem tudo é linha reta, mas juntos corrigimos qualquer erro de compilação na nossa rotina de forma eficiente.",
+                imagem: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80"
+            },
+            {
+                id: 4,
+                data: "14 de Agosto de 2026",
+                titulo: "1 Ano de Otimização",
+                descricao: "E o loop continua. Cada iteração melhora a performance do nosso relacionamento e nos aproxima do ótimo global.",
+                imagem: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=800&q=80"
+            }
+        ];
+
+        const timelineContainer = document.getElementById('timeline-container');
+        const modal = document.getElementById('modal');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        // Renderizar elementos no DOM
+        momentos.forEach(momento => {
+            const html = `
+                <div class="timeline-item" onclick="abrirModal(${momento.id})">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <img src="${momento.imagem}" alt="${momento.titulo}" class="timeline-thumb">
+                        <div class="timeline-text">
+                            <span class="timeline-date">${momento.data}</span>
+                            <h3>${momento.titulo}</h3>
+                            <p>${momento.descricao}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            timelineContainer.insertAdjacentHTML('beforeend', html);
+        });
+
+        // Intersection Observer para animação de rolagem (Fade In on Scroll)
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Anima apenas uma vez
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            observer.observe(item);
+        });
+
+        // Lógica do Modal
+        function abrirModal(id) {
+            const momento = momentos.find(m => m.id === id);
+            if (momento) {
+                document.getElementById('modal-img').src = momento.imagem;
+                document.getElementById('modal-date').textContent = momento.data;
+                document.getElementById('modal-title').textContent = momento.titulo;
+                document.getElementById('modal-desc').textContent = momento.descricao;
+                
+                modal.style.display = 'flex';
+                // RequestAnimationFrame garante que a transição CSS seja aplicada após o display:flex
+                requestAnimationFrame(() => {
+                    modal.classList.add('active');
+                });
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function fecharModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.getElementById('modal-img').src = '';
+            }, 300); // Tempo exato da transição CSS
+        }
+
+        closeModalBtn.addEventListener('click', fecharModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) fecharModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) fecharModal();
+        });
+    </script>
+</body>
+</html>
